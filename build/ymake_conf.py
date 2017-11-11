@@ -1543,17 +1543,20 @@ def detect_msvc_cxx():
         import _winreg
         vskey = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7")
         vid = 0
-        vs_max_version = ""
+        vs_max_version = 0.0
         vs_base_path = ""
         while True:
             try:
                 name, value, type = _winreg.EnumValue(vskey, vid)
                 vid += 1
-                if name > vs_max_version and os.path.exists(value):
-                    vs_max_version = name
+                if not name: # skip Default key
+                    continue
+                if float(name) > vs_max_version and os.path.exists(value):
+                    vs_max_version = float(name)
                     vs_base_path = value
             except _winreg.error:
                 break
+        logging.info("Using version " + str(vs_max_version) + " in " + vs_base_path)
         vs_tools_version_file = os.path.join(vs_base_path, r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt")
         if not os.path.exists(vs_tools_version_file):
             raise Exception("Can not find Microsoft.VCToolsVersion.default.txt")
